@@ -1,4 +1,4 @@
-CFLAGS = -Wall -Wpedantic -Wextra -g -Wno-missing-field-initializers
+CFLAGS = -Wall -Wpedantic -Wextra -g
 LFLAGS = -lwiringPi
 
 all: matrix test

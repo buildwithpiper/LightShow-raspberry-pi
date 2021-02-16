@@ -2,8 +2,8 @@
 Protocol:
     The pi communicates to the 8x8 LED matrix via SPI.
 There are four bytes sent, which are in, in order: red, green, blue, and row select
-Whenever there's a 0 in the nth bit of a color-toggling byte, the nth LED's color is on
-Since it's dealing with LEDs, whenever there's a 0 it's on and a 1 means off
+Whenever there's a 0 in the nth bit of a color-toggling byte, the nth LED's color is on <- very good place for a diagram
+Note: with LEDs, 0 is "on" and 1 is "off."
 
 RED | BLUE | GREEN | ROW
 

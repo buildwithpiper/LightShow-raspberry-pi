@@ -181,10 +181,7 @@ int main(void)
 
   convert_bit_array(zombie, hbits, lbits, bbits);
 
-  // static uint8_t *buffers[4] = {lbits, hbits, hbits, bbits};
-  static uint8_t *buffers[4] = {lbits, lbits, lbits, lbits};
-// //{0x0F, 0x33, 0x55, 0x80};
-//   static uint8_t write_test[4] = {0xEF, 0x01, 0xEE, 0x80};
+  static uint8_t *buffers[4] = {lbits, hbits, hbits, bbits};
 
   uint8_t tick = 0;
   while (1)
