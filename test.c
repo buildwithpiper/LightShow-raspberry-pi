@@ -9,6 +9,9 @@
 #include <string.h>
 #include <unistd.h>
 
+//#include <math.h> // make a spiral, sometime
+//#include <time.h> // for nanosleep() potentially
+
 //these really should be enums but eh
 #define RED 0   //define the red data source
 #define BLUE 1  //define the blue data source
@@ -41,13 +44,15 @@ int main(int argc, char **argv)
     return EXIT_SUCCESS;
   }
 
-  uint8_t on = 0x00;
-  uint8_t off = 0xFF;
+  const uint8_t on = 0x00;
+  const uint8_t off = 0xFF;
+
+  uint16_t time = 0;
   while (1)
   {
     for (size_t row = 0; row < MATRIX_SIZE; row++)
     {
-      data[ROW] = 1 << row;
+      data[ROW] = 1 << ((row + (time >> 8)) % 8);
       uint8_t bits = (uint8_t)row;
       for (size_t i = 0; i < 3; i++)
       {
@@ -62,5 +67,6 @@ int main(int argc, char **argv)
     }
     write(fd, &clear_signal, 4);
     delay(delay_time);
+    time++;
   }
 }

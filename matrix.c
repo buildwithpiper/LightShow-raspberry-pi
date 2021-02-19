@@ -9,94 +9,53 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include <math.h>
-//#include <time.h> // for nanosleep() potentially
-
 //these really should be enums but eh
 #define RED 0   //define the red data source
 #define BLUE 1  //define the blue data source
 #define GREEN 2 // define the green data source
 #define ROW 3   // define row selector field
 
-// six bits of color in RRGGBB form. Taken from lightshow page
-uint8_t imageData[] = {
-    0b110100,
-    0b110100,
-    0b110100,
-    0b000000,
-    0b000000,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b010000,
-    0b110100,
-    0b000000,
-    0b000000,
-    0b110100,
-    0b010000,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b000000,
-    0b110100,
-    0b111111,
-    0b110100,
-    0b110100,
-    0b111111,
-    0b110100,
-    0b000000,
-    0b000000,
-    0b110100,
-    0b000000,
-    0b110100,
-    0b110100,
-    0b000000,
-    0b110100,
-    0b000000,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b010000,
-    0b010000,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b000000,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b000000,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-    0b110100,
-};
+const uint8_t zombie[64] = {
+0b000100,0b000100,0b000100,0b000100,0b000100,0b000100,0b000100,0b000100,
+0b000100,0b000100,0b000100,0b000100,0b001000,0b001000,0b000100,0b000100,
+0b000100,0b001000,0b001000,0b001000,0b001000,0b001000,0b001000,0b000100,
+0b001000,0b001000,0b001000,0b001000,0b001000,0b001000,0b001000,0b000100,
+0b001000,0b000000,0b000000,0b001000,0b001000,0b000000,0b000000,0b001000,
+0b000100,0b001000,0b001000,0b000000,0b000000,0b001000,0b001000,0b000100,
+0b000100,0b001000,0b000000,0b001000,0b001000,0b000000,0b001000,0b000100,
+0b000100,0b000100,0b000100,0b000100,0b000100,0b000100,0b000100,0b000100};
+
+const uint8_t piperbot[64] = {
+0b000001,0b000001,0b000001,0b000001,0b000001,0b000001,0b000001,0b000001,
+0b000001,0b011101,0b011101,0b011101,0b011101,0b011101,0b011101,0b000001,
+0b000001,0b011101,0b111111,0b011101,0b011101,0b111111,0b011101,0b000001,
+0b000001,0b011101,0b000000,0b011101,0b011101,0b000000,0b011101,0b000001,
+0b000001,0b011101,0b111111,0b011101,0b011101,0b111111,0b011101,0b000001,
+0b000001,0b011101,0b011101,0b011101,0b011101,0b011101,0b011101,0b000001,
+0b000001,0b011101,0b011101,0b000000,0b000000,0b011101,0b011101,0b000001,
+0b000001,0b000001,0b000001,0b000001,0b000001,0b000001,0b000001,0b000001};
+
+const uint8_t pip_mouse[64] = {
+0b110100,0b110100,0b110100,0b000000,0b000000,0b110100,0b110100,0b110100,
+0b110100,0b010000,0b110100,0b000000,0b000000,0b110100,0b010000,0b110100,
+0b110100,0b110100,0b110100,0b110100,0b110100,0b110100,0b110100,0b110100,
+0b000000,0b110100,0b111111,0b110100,0b110100,0b111111,0b110100,0b000000,
+0b000000,0b110100,0b000000,0b110100,0b110100,0b000000,0b110100,0b000000,
+0b110100,0b110100,0b110100,0b010000,0b010000,0b110100,0b110100,0b110100,
+0b000000,0b110100,0b110100,0b110100,0b110100,0b110100,0b110100,0b000000,
+0b110100,0b110100,0b110100,0b110100,0b110100,0b110100,0b110100,0b110100};
+
+//change this to "pip_mouse", "zombie", or "piperbot"
+const uint8_t* imageData = pip_mouse;
 
 static const int delay_time = 1;
 static const uint32_t clear_signal = 0xFFFFFFFF;
 
 static const size_t MATRIX_SIZE = 8;
+static const size_t BYTES_PER_ROW = 4;
 
 /*
-  bit_array 64 bytes (1 byte per pixel, 6 bits of which is used)
-  hi_bits 32 bytes (4 bytes/row (RRBBGG plus two row bits))
-  low_bits 32 bytes 
-  both_bits 32 bytes
-
+  takes a uint_8[64] and converts it into easier-to-parse format for display 
 */
 void convert_bit_array(const uint8_t *bit_array, uint8_t *hi_bits, uint8_t *low_bits, uint8_t *both_bits)
 {
@@ -121,7 +80,7 @@ void convert_bit_array(const uint8_t *bit_array, uint8_t *hi_bits, uint8_t *low_
       h_blu = (h_blu << 1) | ((bits >> 1) & 1);
       l_blu = (l_blu << 1) | ((bits >> 0) & 1);
     }
-    size_t index = i * 4;
+    size_t index = i * BYTES_PER_ROW;
 
     hi_bits[index + ROW] = 1 << i;
     hi_bits[index + RED] = ~h_red;
@@ -134,7 +93,7 @@ void convert_bit_array(const uint8_t *bit_array, uint8_t *hi_bits, uint8_t *low_
     low_bits[index + GREEN] = ~l_grn;
   }
 
-  for (size_t i = 0; i < MATRIX_SIZE * 4; i++)
+  for (size_t i = 0; i < MATRIX_SIZE * BYTES_PER_ROW; i++)
   {
     both_bits[i] = hi_bits[i] | low_bits[i];
   }
@@ -144,26 +103,29 @@ void convert_bit_array(const uint8_t *bit_array, uint8_t *hi_bits, uint8_t *low_
 
 void write_buffer(int fd, uint8_t *buf)
 {
-  static uint8_t data[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-  for (size_t row = 0; row < MATRIX_SIZE * 4; row += 4) //write each row 
+  static uint8_t data[BYTES_PER_ROW] = {0xFF, 0xFF, 0xFF, 0xFF};
+  for (size_t row = 0; row < MATRIX_SIZE * BYTES_PER_ROW; row += BYTES_PER_ROW)
   {
-    data[3] = buf[row + ROW];
-    for(size_t color = 0; color < 3; color++) {
+    data[ROW] = buf[row + ROW];
+    // need to flash red/green/blue components separately - don't ask me why
+    for (size_t color = 0; color < 3; color++)
+    {
       data[color] = buf[row + color];
-      write(fd, data, 4);
-      data[color] = (uint8_t) 0xFF;
+      write(fd, data, BYTES_PER_ROW);
+      data[color] = (uint8_t)0xFF;
     }
   }
-  write(fd, (void *)&clear_signal, 4); // turn off, otherwise the last row is "brighter"
+  // turn off, otherwise the last row is on for longer
+  write(fd, (void *)&clear_signal, BYTES_PER_ROW);
   return;
 }
-
 
 int main(void)
 {
   wiringPiSetup();
 
-  // initialize SPI with (channel, clock rate). 0 is channel. clock rate is between 500,000 and 32,000,000
+  // initialize SPI with (channel, clock rate).
+  //0 is channel. clock rate is between 500,000 and 32,000,000
   int fd = wiringPiSPISetup(0, 1000000);
   if (fd == -1)
   {
@@ -171,9 +133,10 @@ int main(void)
     return EXIT_FAILURE;
   }
 
-  static uint8_t hbits[MATRIX_SIZE * 4] = {}; // high bits drawbuffer
-  static uint8_t lbits[MATRIX_SIZE * 4] = {}; // low bits drawbuffer
-  static uint8_t bbits[MATRIX_SIZE * 4] = {}; // both bits
+  // drawbuffers
+  static uint8_t hbits[MATRIX_SIZE * BYTES_PER_ROW] = {}; // high bits
+  static uint8_t lbits[MATRIX_SIZE * BYTES_PER_ROW] = {}; // low bits
+  static uint8_t bbits[MATRIX_SIZE * BYTES_PER_ROW] = {}; // both bits
 
   convert_bit_array(imageData, hbits, lbits, bbits);
 
@@ -185,6 +148,6 @@ int main(void)
     write_buffer(fd, buffers[tick]);
     delay(delay_time);
 
-    tick = (tick + 1) % 4; 
+    tick = (tick + 1) % 4;
   }
 }

@@ -1,10 +1,5 @@
+For use with https://www.playpiper.com/pages/lightshow-portal
 
-Protocol:
-    The pi communicates to the 8x8 LED matrix via SPI.
-There are four bytes sent, which are in, in order: red, green, blue, and row select
-Whenever there's a 0 in the nth bit of a color-toggling byte, the nth LED's color is on <- very good place for a diagram
-Note: with LEDs, 0 is "on" and 1 is "off."
+Based off of https://wiki.52pi.com/index.php/RPI-RGB-LED-Matrix_SKU:EP-0043#How_to_use_it
 
-RED | BLUE | GREEN | ROW
-
-
+wiringPi documentation is at http://wiringpi.com/reference/spi-library/
