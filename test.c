@@ -2,15 +2,12 @@
 #include <wiringPi.h>
 #include <wiringPiSPI.h>
 
-#include <string.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <stdint.h>
-#include <unistd.h>
 #include <stdio.h>
-
-#include <math.h>
-//#include <time.h> // for nanosleep() potentially
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 //these really should be enums but eh
 #define RED 0   //define the red data source
@@ -22,10 +19,8 @@ static const int delay_time = 1;
 static const uint32_t clear_signal = 0xFFFFFFFF;
 
 static const size_t MATRIX_SIZE = 8;
-/*
-TODO: figure out if R- -G is the same as red AND green at the same time, then one after another
-*/
-int main(void)
+
+int main(int argc, char **argv)
 {
   wiringPiSetup();
 
@@ -37,17 +32,35 @@ int main(void)
     return EXIT_FAILURE;
   }
 
-  // static uint8_t *buffers[4] = {lbits, hbits, hbits, bbits};
-// //{0x0F, 0x33, 0x55, 0x80};
-  static uint8_t test[4] = {0xEF, 0x01, 0xEE, 0x80};
+  static uint8_t data[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
-  uint8_t tick = 0;
+  if (argc >= 2 && !strcmp("off", argv[1]))
+  {
+    printf("Turning off LED matrix\n");
+    write(fd, data, 4);
+    return EXIT_SUCCESS;
+  }
+
+  uint8_t on = 0x00;
+  uint8_t off = 0xFF;
   while (1)
   {
-    // is SPI writes sequential? need to do write(4 bytes), write(4 bytes) instead of write(8 bytes)
-    write(fd, test, 4);
-    delay(delay_time);
+    for (size_t row = 0; row < MATRIX_SIZE; row++)
+    {
+      data[ROW] = 1 << row;
+      uint8_t bits = (uint8_t)row;
+      for (size_t i = 0; i < 3; i++)
+      {
+        data[RED] = off;
+        data[GREEN] = off;
+        data[BLUE] = off;
 
-    tick = (tick + 1) % 4;
+        data[i] = bits & 1 ? on : off;
+        write(fd, data, 4);
+        bits >>= 1;
+      }
+    }
+    write(fd, &clear_signal, 4);
+    delay(delay_time);
   }
 }

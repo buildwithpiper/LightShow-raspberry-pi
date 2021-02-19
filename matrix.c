@@ -19,7 +19,7 @@
 #define ROW 3   // define row selector field
 
 // six bits of color in RRGGBB form. Taken from lightshow page
-uint8_t zombie[] = {
+uint8_t imageData[] = {
     0b110100,
     0b110100,
     0b110100,
@@ -144,24 +144,20 @@ void convert_bit_array(const uint8_t *bit_array, uint8_t *hi_bits, uint8_t *low_
 
 void write_buffer(int fd, uint8_t *buf)
 {
-  for (size_t i = 0; i < MATRIX_SIZE * 4; i += 4) //write each row 
+  static uint8_t data[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+  for (size_t row = 0; row < MATRIX_SIZE * 4; row += 4) //write each row 
   {
-    write(fd, (void *)(buf + i), 4);
+    data[3] = buf[row + ROW];
+    for(size_t color = 0; color < 3; color++) {
+      data[color] = buf[row + color];
+      write(fd, data, 4);
+      data[color] = (uint8_t) 0xFF;
+    }
   }
   write(fd, (void *)&clear_signal, 4); // turn off, otherwise the last row is "brighter"
   return;
 }
 
-void set_bit(uint8_t *buf, int color, size_t x, size_t y)
-{
-  uint8_t mask = ~(1 << x);
-  buf[y * 4 + color] &= mask;
-}
-
-void draw_spiral(uint8_t *buf, int color, uint32_t curl)
-{
-  return;
-}
 
 int main(void)
 {
@@ -179,17 +175,16 @@ int main(void)
   static uint8_t lbits[MATRIX_SIZE * 4] = {}; // low bits drawbuffer
   static uint8_t bbits[MATRIX_SIZE * 4] = {}; // both bits
 
-  convert_bit_array(zombie, hbits, lbits, bbits);
+  convert_bit_array(imageData, hbits, lbits, bbits);
 
-  static uint8_t *buffers[4] = {lbits, hbits, hbits, bbits};
+  uint8_t *buffers[4] = {lbits, hbits, hbits, bbits};
 
   uint8_t tick = 0;
   while (1)
   {
-    // is SPI writes sequential? need to do write(4 bytes), write(4 bytes) instead of write(8 bytes)
     write_buffer(fd, buffers[tick]);
     delay(delay_time);
 
-    tick = (tick + 1) % 4;
+    tick = (tick + 1) % 4; 
   }
 }
